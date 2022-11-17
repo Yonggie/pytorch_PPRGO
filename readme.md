@@ -1,4 +1,5 @@
 # The Unofficial Pytorch implementation of PPRGO
+Pytorch implementation of PPRGO in paper "Is PageRank All You Need for Scalable Graph Neural Networks?"
 
 The main example is in ``dgl_pprgo.py``, the rest are pretty much useless.
 
