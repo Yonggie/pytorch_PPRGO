@@ -1,7 +1,6 @@
 
 # 做掉安装anaconda pytorch dgl
-# 做掉page rank “算法”
-# 初步梳理pprgo模型
+# 初步梳理实现pprgo模型
 # 熟悉dgl框架
 
 # page rank

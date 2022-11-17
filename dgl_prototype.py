@@ -1,5 +1,6 @@
 import dgl
 from dgl import PPR
+import torch.nn as nn
 import numpy as np
 import torch
 
@@ -15,12 +16,10 @@ edge_num=len(edge_list[0])
 K=3
 
 
-
 # initialize random graph
 input_g=dgl.graph(edge_list,num_nodes=num_node)
 input_g.ndata['x'] = torch.randn(num_node, feature_dim)
-input_g.ndata['pr'] = torch.randn(num_node, feature_dim)
-# required by personalized page rank (PPR)
+# for directed graph
 # input_g.edata['w'] = torch.rand(edge_num)
 
 
@@ -30,39 +29,49 @@ ppr_g=ppr(input_g)
 
 # sort top k information
 ppr_info=ppr_g.edata['w'].reshape(num_node,num_node)
+
     
-# from collections import defaultdict
 
-# adj_list=defaultdict(list) # source index:[dist_idx0,dist_idx1,...]
-# srcs,dists=input_g.edges()
-# weights=input_g.edata['w']
-# for src,dist,w in  zip(srcs,dists,weights):
-#     adj_list[src.item()].append((dist.item(),w.item()))
 
-# sorted_adj_list={k:sorted(v,key=lambda x:x[1],reverse=True) for k,v in adj_list.items()}
-# top_k={k:[item[0] for item in v[:K]] for k,v in sorted_adj_list.items()}
 
 def find_top_k_idx(index):
     '''
         return the neighbour indices of target index
     '''
-    return torch.argmax(ppr_info[index],dim=0)[:K]
+    return torch.argmax(ppr_info[index],keepdim=True)[:K]
 
 
 def f_theta(x):
-    return mlp(x)
+    return x
 
-H=f_theta(X)
+
+# node level forward
+H=f_theta(input_g.ndata['x'])
+
 zs=[]
-for i in enumerate(reps.shape[0]):
+for i in range(input_g.ndata['x'].shape[0]):
     top_k_idxs=find_top_k_idx(i)
 
-    topk_vec=ppr_info[i][top_k_idxs]
-    topk_h=H[top_k_idxs]
     
-    z_i=torch.sum(topk_vec@topk_h,dim=1)
-    
+    topk_h=H[top_k_idxs] # k*d
+    # topk_diag=ppr_info[i][top_k_idxs].diag()
+    # z_i=topk_diag@topk_h
+
+    topk_vs=ppr_info[i][top_k_idxs] # k*1
+    z_i=(topk_vs*topk_h).sum(dim=-2)
     zs.append(z_i)
 
-Z=torch.cat([zs],dim=0)
+Z=torch.stack(zs)
 
+
+# vectorization =======================================================
+H=f_theta(input_g.ndata['x']) # n*d
+topk_idxs=torch.argmax(ppr_info,dim=1,keepdim=True)[:,:K] # n*k
+topk_matrix=ppr_info.gather(1,topk_idxs) # n*k
+topk_matrix=topk_matrix.unsqueeze(-1) # n*k*1
+topk_h=H[topk_idxs] # n*k*d
+Z2=(topk_matrix*topk_h).sum(dim=-2) # n*d
+
+
+# check done, 结果完全一样
+exit()
