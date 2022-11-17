@@ -75,6 +75,7 @@ class PPRGO(nn.Module):
 # out=pprgo(toy_g)
 # print(out)
 
+
 from dgl.data import FraudDataset
 
 dataset = FraudDataset('yelp')
@@ -94,10 +95,6 @@ graph = dgl.to_homogeneous(hete_g)
 graph.ndata['x'] = torch.randn(graph.num_nodes(), x_dim)
 node_features=graph.ndata['x']
 
-
-# 实现、检查、打包pprgo
-# 用数据集yelp，node 45,954(14.5% fraud)，初步验证pprgo
-# 出现问题有 训练极其缓慢，排查ing
 
 def evaluate(model, graph, labels, mask):
     model.eval()
