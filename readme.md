@@ -1,24 +1,24 @@
-The Unofficial Pytorch implementation of PPRGO
+# The Unofficial Pytorch implementation of PPRGO
 
 The main example is in ``dgl_pprgo.py``, the rest are pretty much useless.
 
-# Setup environment
+## Setup environment
 ```
 conda env create -f env.yaml
 ```
 
-# Dataset
+## Dataset
 Dataset yelp from [DGL datasets](https://docs.dgl.ai/api/python/dgl.data.html) from finacial fraud detection.
 
-# Run
+## Run
 ```
 python dgl_pprgo.py
 ```
 
-# Note 
+## Note 
 As personalized page rank is very time-comsuming, you may take a long time to convey the first run.
 
-# Example training log
+## Example training log
 ```
 start training...
 load PPR information from the existing.
