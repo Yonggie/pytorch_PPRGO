@@ -60,6 +60,82 @@ class PPRGO(nn.Module):
         return Z
 
 
+class PPRGO_Layer(nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+    
+
+    def forward(self,g):
+        H=self.f_theta(g.ndata['x'])
+        topk_idxs=torch.argmax(self.ppr_info,dim=1,keepdim=True)[:,:self.K] # n*k
+        topk_matrix=self.ppr_info.gather(1,topk_idxs) # n*k
+        topk_matrix=topk_matrix.unsqueeze(-1) # n*k*1
+        topk_h=H[topk_idxs] # n*k*d
+        Z=(topk_matrix*topk_h).sum(dim=-2) # n*d
+
+
+class PPRGO2(nn.Module):
+    
+    def __init__(self,K,x_in,x_out,re_ppr=False):
+        '''
+            K: top k neighbour of PPR
+            x_in: X feature input dimension
+            x_out: output dimension
+        '''
+        super().__init__()
+        self.K=K
+        self.re_ppr=re_ppr
+        self.ppr_info=None
+        self.f_theta=nn.Linear(x_in,x_out)
+        
+    
+    def compute(self,g):
+        ppr=PPR(avg_degree=0)
+        ppr_info=ppr(g).edata['w'].reshape(g.num_nodes(),g.num_nodes())
+        self.ppr_info=ppr_info
+        torch.save(self.ppr_info,'model_data/ppr_info.pt')
+
+        return ppr_info
+
+
+    def get_ppr_info(self,g):
+        import os
+        if self.re_ppr:
+            print('processing PPR, it may take a while...')
+            self.ppr_info=self.compute(g)
+        else:
+            if os.path.exists('model_data/ppr_info.pt'):
+                print('load PPR information from the existing.')
+                self.ppr_info=torch.load('model_data/ppr_info.pt')
+            else:
+                print('processing PPR, it may take a while...')
+                self.ppr_info=self.compute(g)
+
+        
+
+
+    def forward(self,g):
+        
+        if self.ppr_info is None:
+            self.get_ppr_info(g)
+        
+        H=self.f_theta(g.ndata['x'])
+        topk_idxs=torch.argmax(self.ppr_info,dim=1,keepdim=True)[:,:self.K] # n*k
+        topk_matrix=self.ppr_info.gather(1,topk_idxs) # n*k
+        topk_matrix=topk_matrix.unsqueeze(-1) # n*k*1
+        topk_h=H[topk_idxs] # n*k*d
+        Z=(topk_matrix*topk_h).sum(dim=-2) # n*d
+        
+        H=F.relu(Z)
+        topk_idxs=torch.argmax(self.ppr_info,dim=1,keepdim=True)[:,:self.K] # n*k
+        topk_matrix=self.ppr_info.gather(1,topk_idxs) # n*k
+        topk_matrix=topk_matrix.unsqueeze(-1) # n*k*1
+        topk_h=H[topk_idxs] # n*k*d
+        Z=(topk_matrix*topk_h).sum(dim=-2) # n*d
+
+
+        return Z
+
 # example
 # num_node=100
 # feature_dim=128
@@ -107,12 +183,12 @@ def evaluate(model, graph, labels, mask):
         return correct.item() * 1.0 / len(labels)
 
 
-K=3
+K=1024
 out_dim=32
-EPOCH=5000
+EPOCH=10000
 iterval=100
 
-model = PPRGO(K,x_dim,out_dim)
+model = PPRGO2(K,x_dim,out_dim)
 optimizer = torch.optim.Adam(model.parameters())
 
 print('start training...')
