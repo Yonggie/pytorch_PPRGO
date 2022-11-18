@@ -6,7 +6,9 @@ import torch
 
 
 class PPRGO(nn.Module):
-    
+    '''
+        1 layer pprgo
+    '''
     def __init__(self,K,x_in,x_out,re_ppr=False):
         '''
             K: top k neighbour of PPR
@@ -60,22 +62,11 @@ class PPRGO(nn.Module):
         return Z
 
 
-class PPRGO_Layer(nn.Module):
-    def __init__(self) -> None:
-        super().__init__()
-    
-
-    def forward(self,g):
-        H=self.f_theta(g.ndata['x'])
-        topk_idxs=torch.argmax(self.ppr_info,dim=1,keepdim=True)[:,:self.K] # n*k
-        topk_matrix=self.ppr_info.gather(1,topk_idxs) # n*k
-        topk_matrix=topk_matrix.unsqueeze(-1) # n*k*1
-        topk_h=H[topk_idxs] # n*k*d
-        Z=(topk_matrix*topk_h).sum(dim=-2) # n*d
-
 
 class PPRGO2(nn.Module):
-    
+    '''
+        2 layer pprgo
+    '''
     def __init__(self,K,x_in,x_out,re_ppr=False):
         '''
             K: top k neighbour of PPR
