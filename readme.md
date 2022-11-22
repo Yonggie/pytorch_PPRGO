@@ -1,7 +1,7 @@
 # The Unofficial Pytorch implementation of PPRGO
 Pytorch implementation of PPRGO in paper "Is PageRank All You Need for Scalable Graph Neural Networks?"
 
-The main example is in ``dgl_pprgo.py``, the rest are pretty much useless.
+The main example is in ``dgl_pprgo.py``.
 
 ## Setup environment
 ```
@@ -18,6 +18,9 @@ python dgl_pprgo.py
 
 ## Note 
 As personalized page rank is very time-comsuming, you may take a long time to convey the first run.
+
+## Directory train_results
+It contains a few experiment log, ``1layer`` means logs of one PPRGO layer experiments, and ``k`` means different top k values, and ``predictor`` means there is predictor added onto the model.
 
 ## Example training log
 ```

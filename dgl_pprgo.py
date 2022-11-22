@@ -20,6 +20,7 @@ class PPRGO(nn.Module):
         self.re_ppr=re_ppr
         self.ppr_info=None
         self.f_theta=nn.Linear(x_in,x_out)
+        self.predictor=nn.Linear(x_out,2)
         
     
     def compute(self,g):
@@ -59,7 +60,9 @@ class PPRGO(nn.Module):
         topk_h=H[topk_idxs] # n*k*d
         Z=(topk_matrix*topk_h).sum(dim=-2) # n*d
 
-        return Z
+        z=F.relu(Z)
+        out=self.predictor(z)
+        return out
 
 
 
@@ -78,7 +81,7 @@ class PPRGO2(nn.Module):
         self.re_ppr=re_ppr
         self.ppr_info=None
         self.f_theta=nn.Linear(x_in,x_out)
-        
+        self.predictor=nn.Linear(x_out,2)
     
     def compute(self,g):
         ppr=PPR(avg_degree=0)
@@ -124,8 +127,10 @@ class PPRGO2(nn.Module):
         topk_h=H[topk_idxs] # n*k*d
         Z=(topk_matrix*topk_h).sum(dim=-2) # n*d
 
+        z=F.relu(Z)
+        out=self.predictor(z)
 
-        return Z
+        return z
 
 # example
 # num_node=100
@@ -174,7 +179,7 @@ def evaluate(model, graph, labels, mask):
         return correct.item() * 1.0 / len(labels)
 
 
-K=1024
+K=512
 out_dim=32
 EPOCH=10000
 iterval=100
